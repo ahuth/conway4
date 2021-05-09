@@ -38,8 +38,7 @@ export default function Conway(size: number) {
     cells.forEach(function (cell, index) {
       // If the cell is on, draw it. For the cell to be on the first bit must be 1.
       if ((cell & 1) === 1) {
-        const row = index % size;
-        const column = Math.floor(index / size);
+        const [row, column] = getCoordFromIndex(index);
         const x = row * cellWidth;
         const y = column * cellHeight;
         context.fillRect(x, y, cellWidth, cellHeight);
@@ -51,10 +50,80 @@ export default function Conway(size: number) {
    * Erase everything and fill with random data.
    */
   function randomize(): void {
+    // Zero out each cell. This sets the neighbor count to 0, which makes it easier to randomize
+    // and update the neighbor count.
     for (let index = 0; index < cells.length; index++) {
-      cells[index] = Math.round(Math.random());
+      cells[index] = 0;
+    }
+
+    // Randomize and update neighbor counts.
+    for (let index = 0; index < cells.length; index++) {
+      const value = Math.round(Math.random());
+
+      cells[index] |= value;
+
+      if (value) {
+        incrementSurroundingNeighborCounts(index);
+      }
     }
   }
 
-  return {draw, randomize};
+  /**
+   * Convert a 1-dimensional array index to a 2-dimensional row and column.
+   */
+  function getCoordFromIndex(index: number): [x: number, y: number] {
+    return [
+      index % size,
+      Math.floor(index / size),
+    ];
+  }
+
+  /**
+   * Increment the neighbor counts for all 8 cells around an index.
+   */
+  function incrementSurroundingNeighborCounts(index: number): void {
+    const [x, y] = getCoordFromIndex(index);
+    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x - 1), wrapAroundSize(y - 1)));
+    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x - 1), y));
+    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x - 1), wrapAroundSize(y + 1)));
+    incrementNeighborCount(getIndexFromCoord(x,                     wrapAroundSize(y - 1)));
+    incrementNeighborCount(getIndexFromCoord(x,                     wrapAroundSize(y + 1)));
+    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x + 1), wrapAroundSize(y - 1)));
+    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x + 1), y));
+    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x + 1), wrapAroundSize(y + 1)));
+  }
+
+  /**
+   * Increment the neighbor count of a cell.
+   */
+  function incrementNeighborCount(index: number): void {
+    // Extract the current count.
+    const currentCount = cells[index] >>> 1;
+    // Increment and convert to the desired bits.
+    const nextCount = currentCount + 1;
+    const countBits = nextCount << 1;
+    // Clear out the old count bits.
+    cells[index] &= 0b11100001;
+    // Set the new bits.
+    cells[index] |= countBits;
+  }
+
+  /**
+   * Convert a 2-dimensional row and column into a 1-dimensional index.
+   */
+  function getIndexFromCoord(x: number, y: number): number {
+    return x + y * size;
+  }
+
+  function wrapAroundSize(coord: number): number {
+    if (coord < 0) {
+      return size - 1;
+    }
+    if (coord >= size) {
+      return 0;
+    }
+    return coord;
+  }
+
+  return {debug, draw, randomize};
 }
