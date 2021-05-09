@@ -9,6 +9,19 @@ export default function Conway(size: number) {
   const cells = new Uint8Array(size * size);
 
   /**
+   * Log the cells to the console. Useful for debugging.
+   */
+  function debug() {
+    console.log(Array.from(cells).map(function (cell) {
+      return {
+        raw: cell,
+        state: cell & 1,
+        neighborCount: cell >>> 1,
+      };
+    }));
+  }
+
+  /**
    * Draw an iteration of the game of life.
    */
   function draw(canvas: HTMLCanvasElement): void {

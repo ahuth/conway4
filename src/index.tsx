@@ -6,4 +6,5 @@ document.addEventListener('DOMContentLoaded', function () {
   const game = Conway(100);
   game.randomize();
   game.draw(canvas);
+  game.debug();
 });
