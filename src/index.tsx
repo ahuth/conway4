@@ -1,3 +1,8 @@
+import Conway from './conway';
 import './index.css';
 
-console.log('hello world!');
+document.addEventListener('DOMContentLoaded', function () {
+  const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+  const game = Conway(100);
+  game.draw(canvas);
+});
