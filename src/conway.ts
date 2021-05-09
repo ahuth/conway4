@@ -78,7 +78,6 @@ export default function Conway(size: number) {
    * Generate the next iteration.
    */
   function next() {
-    debugger;
     const clone = new Uint8Array(cells);
 
     for (let index = 0; index < clone.length; index++) {
