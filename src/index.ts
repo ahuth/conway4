@@ -4,7 +4,7 @@ import './index.css';
 document.addEventListener('DOMContentLoaded', function () {
   let playing = false;
 
-  const game = Conway(100);
+  const game = Conway(250);
   game.randomize();
 
   const canvas = document.getElementById('canvas') as HTMLCanvasElement;
