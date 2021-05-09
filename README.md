@@ -7,4 +7,4 @@ Fourth implementation, after
 - https://github.com/ahuth/conway2
 - https://github.com/ahuth/conway3
 
-![animated image of conway's game of life](./screenshots/conway4.gif)
+![animated image of conway's game of life](./screenshots/conway4_2.gif)
