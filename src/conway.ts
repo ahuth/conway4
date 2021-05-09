@@ -15,6 +15,7 @@ export default function Conway(size: number) {
     console.log(Array.from(cells).map(function (cell) {
       return {
         raw: cell,
+        rawBits: cell.toString(2),
         state: cell & 1,
         neighborCount: cell >>> 1,
       };
@@ -47,25 +48,77 @@ export default function Conway(size: number) {
   }
 
   /**
+   * Turn all cells off.
+   */
+  function clear(): void {
+    for (let index = 0; index < cells.length; index++) {
+      cells[index] = 0;
+    }
+  }
+
+  /**
    * Erase everything and fill with random data.
    */
   function randomize(): void {
     // Zero out each cell. This sets the neighbor count to 0, which makes it easier to randomize
     // and update the neighbor count.
-    for (let index = 0; index < cells.length; index++) {
-      cells[index] = 0;
-    }
+    clear();
 
     // Randomize and update neighbor counts.
     for (let index = 0; index < cells.length; index++) {
       const value = Math.round(Math.random());
 
-      cells[index] |= value;
-
       if (value) {
-        incrementSurroundingNeighborCounts(index);
+        setCell(index);
       }
     }
+  }
+
+  /**
+   * Generate the next iteration.
+   */
+  function next() {
+    debugger;
+    const clone = new Uint8Array(cells);
+
+    for (let index = 0; index < clone.length; index++) {
+      const cell = clone[index];
+      const currentState = cell & 1;
+      const neighborCount = cell >>> 1;
+
+      // Update the cell if there's a possibility it has changed.
+      if (currentState || neighborCount) {
+        const nextState = getNextState(currentState, neighborCount);
+
+        if (nextState !== currentState) {
+          if (nextState) {
+            setCell(index);
+          } else {
+            clearCell(index);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Turn a cell on.
+   */
+  function setCell(index: number): void {
+    // Set the state to on.
+    cells[index] |= 1;
+    // Update neighboring neighbor counts.
+    eachNeighbor(incrementNeighborCount, index);
+  }
+
+  /**
+   * Turn a cell off.
+   */
+  function clearCell(index: number): void {
+    // Set the state to off.
+    cells[index] &= ~1;
+    // Update neighboring neighbor counts.
+    eachNeighbor(decrementNeighborCount, index);
   }
 
   /**
@@ -79,33 +132,32 @@ export default function Conway(size: number) {
   }
 
   /**
-   * Increment the neighbor counts for all 8 cells around an index.
+   * Perform some operation on all 8 cells around an index.
    */
-  function incrementSurroundingNeighborCounts(index: number): void {
+  function eachNeighbor(operation: (index: number) => void, index: number): void {
     const [x, y] = getCoordFromIndex(index);
-    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x - 1), wrapAroundSize(y - 1)));
-    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x - 1), y));
-    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x - 1), wrapAroundSize(y + 1)));
-    incrementNeighborCount(getIndexFromCoord(x,                     wrapAroundSize(y - 1)));
-    incrementNeighborCount(getIndexFromCoord(x,                     wrapAroundSize(y + 1)));
-    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x + 1), wrapAroundSize(y - 1)));
-    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x + 1), y));
-    incrementNeighborCount(getIndexFromCoord(wrapAroundSize(x + 1), wrapAroundSize(y + 1)));
+    operation(getIndexFromCoord(wrapAroundSize(x - 1), wrapAroundSize(y - 1)));
+    operation(getIndexFromCoord(wrapAroundSize(x - 1), y));
+    operation(getIndexFromCoord(wrapAroundSize(x - 1), wrapAroundSize(y + 1)));
+    operation(getIndexFromCoord(x,                     wrapAroundSize(y - 1)));
+    operation(getIndexFromCoord(x,                     wrapAroundSize(y + 1)));
+    operation(getIndexFromCoord(wrapAroundSize(x + 1), wrapAroundSize(y - 1)));
+    operation(getIndexFromCoord(wrapAroundSize(x + 1), y));
+    operation(getIndexFromCoord(wrapAroundSize(x + 1), wrapAroundSize(y + 1)));
   }
 
   /**
    * Increment the neighbor count of a cell.
    */
   function incrementNeighborCount(index: number): void {
-    // Extract the current count.
-    const currentCount = cells[index] >>> 1;
-    // Increment and convert to the desired bits.
-    const nextCount = currentCount + 1;
-    const countBits = nextCount << 1;
-    // Clear out the old count bits.
-    cells[index] &= 0b11100001;
-    // Set the new bits.
-    cells[index] |= countBits;
+    cells[index] += 0b10;
+  }
+
+  /**
+   * Decrement the neighbor count of a cell.
+   */
+  function decrementNeighborCount(index: number): void {
+    cells[index] -= 0b10;
   }
 
   /**
@@ -115,6 +167,9 @@ export default function Conway(size: number) {
     return x + y * size;
   }
 
+  /**
+   * Wrap a row or column number around the height/width of the game.
+   */
   function wrapAroundSize(coord: number): number {
     if (coord < 0) {
       return size - 1;
@@ -125,5 +180,20 @@ export default function Conway(size: number) {
     return coord;
   }
 
-  return {debug, draw, randomize};
+  /**
+   * Get the next cell state based on the current state and number of neighbors. This is what makes
+   * this Conway's Game of Life.
+   */
+  function getNextState(currentState: number, neighborCount: number) {
+    switch (neighborCount) {
+      case 3:
+        return 1;
+      case 2:
+        return currentState;
+      default:
+        return 0;
+    }
+  }
+
+  return { clear, debug, draw, next, randomize};
 }

@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const nextButton = document.getElementById('next') as HTMLButtonElement;
   nextButton.addEventListener('click', function () {
-    game.tick();
+    game.next();
     game.draw(canvas);
   });
 });
