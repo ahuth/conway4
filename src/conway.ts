@@ -34,5 +34,14 @@ export default function Conway(size: number) {
     });
   }
 
-  return {draw};
+  /**
+   * Erase everything and fill with random data.
+   */
+  function randomize(): void {
+    for (let index = 0; index < cells.length; index++) {
+      cells[index] = Math.round(Math.random());
+    }
+  }
+
+  return {draw, randomize};
 }
